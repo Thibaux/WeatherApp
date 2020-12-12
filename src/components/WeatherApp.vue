@@ -4,17 +4,37 @@
             <input type="text" class="search-bar" placeholder="Search for a city..." v-model="query"
                 @keypress="fetchWeather" />
         </div>
-        <div class="weather-wrap" v-if="typeof weather.main != 'undefined'">
-            <div class="location-box">
-                <div class="location">{{ weather.name }}, {{ weather.sys.country }}</div>
-                <div class="date">{{ dateBuilder() }}</div>
+        <div class="weather-wrap">
+            <div class="404Error" v-if="httpcode == '404'">
+                <p>
+                    Sorry! {{ query }} is not found in the Open weather map database. <br>
+                    Please change your query.
+                </p>
             </div>
-            <div class="weather-box">
-                <div class="temp">{{ Math.round(weather.main.temp) }} °C</div>
-                <div class="weather">Feels like: {{ Math.round(weather.main.feels_like) }} °C</div>
-                <div class="min_max_temp">
-                    <div class="weather min">Min: {{ Math.round(weather.main.temp_min) }} °C</div>
-                    <div class="weather max">Max: {{ Math.round(weather.main.temp_max) }} °C</div>
+            <div class="500Error" v-if="httpcode == '500'">
+                <p>
+                    Sorry! There was an error with the Open weather map API. <br>
+                    Pleas try again later.
+                </p>
+            </div>
+            <div class="
+                location-box-container" v-if="typeof weather.main != 'undefined' && httpcode == '200'">
+                <div class="
+                location-box">
+                    <div class="location">{{ weather.name }}, {{ weather.sys.country }}</div>
+                    <div class="date">{{ dateBuilder() }}</div>
+                </div>
+                <div class="weather-box">
+                    <div class="temp">{{ Math.round(weather.main.temp) }} °C</div>
+                    <div class="weather">Feels like: {{ Math.round(weather.main.feels_like) }} °C</div>
+                    <div class="min_max_temp">
+                        <div class="weather min">Min: {{ Math.round(weather.main.temp_min) }} °C</div>
+                        <div class="weather max">Max: {{ Math.round(weather.main.temp_max) }} °C</div>
+                    </div>
+                    <div class="wind_speed_sky">
+                        <div class="weather wind_speed">Wind speed: {{ weather.wind.speed }} km/h</div>
+                        <div class="weather sky">Sky: {{ weather.weather[0].description }} </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -29,6 +49,7 @@ export default {
             api_base: "http://api.openweathermap.org/data/2.5/",
             query: "",
             weather: {},
+            httpcode: ''
         };
     },
     methods: {
@@ -44,7 +65,15 @@ export default {
             }
         },
         setResults(results) {
-            this.weather = results;
+            if (results.cod == 404) {
+                this.httpcode = "404";
+            } else if (results.cod == 500) {
+                this.httpcode = "500";
+            } else if (results.cod == 200) {
+                this.httpcode = "200";
+                console.log(this.httpcode)
+                this.weather = results;
+            }
         },
         dateBuilder() {
             let d = new Date();
@@ -94,7 +123,6 @@ main {
     width: 100%;
 }
 
-
 .search-box .search-bar {
     display: block;
     width: 90vw;
@@ -137,7 +165,14 @@ main {
     display: grid;
     justify-content: center;
     align-content: center;
-    margin-bottom: 10rem;
+    margin-bottom: 5rem;
+}
+
+.weather-wrap p {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 500;
+    text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .weather-box {
